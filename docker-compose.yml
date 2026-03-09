@@ -1,0 +1,18 @@
+# version: '3'  #new version docker doesnt want it
+services:
+  mongo: #service name
+    image: mongo:latest #this tells docker to Download MongoDB image from Docker Hub on command docker-compose up
+    container_name: mongo
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    volumes:
+      - mongo:/data/db
+    ports:
+      - '6000:27017' #backend will connect to mongodb://mongo:27017
+
+volumes:
+  mongo:
