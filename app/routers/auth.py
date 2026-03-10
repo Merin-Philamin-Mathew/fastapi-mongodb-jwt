@@ -1,7 +1,7 @@
 # [...] imports
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
-from fastapi import APIRouter, Response, status, Depends, HTTPException
+from fastapi import APIRouter, Request, Response, status, Depends, HTTPException
 
 from app import oauth2
 from app.database import User
@@ -46,7 +46,7 @@ def login(payload: schemas.LoginUserSchema, response: Response, Authorize: AuthJ
     db_user = User.find_one({'email': payload.email.lower()})
     if not db_user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail='Incorrect Email or Password')
+                            detail='Incorrect Email!')
     user = userEntity(db_user)
 
     # Check if the password is valid
@@ -74,11 +74,20 @@ def login(payload: schemas.LoginUserSchema, response: Response, Authorize: AuthJ
     return {'status': 'success', 'access_token': access_token}
 
 
+import traceback
+
 # [...] refresh token
 @router.get('/refresh')
-def refresh_token(response: Response, Authorize: AuthJWT = Depends()):
+def refresh_token(response: Response, request: Request, Authorize: AuthJWT = Depends()):
     try:
+        # Debug: print all cookies the server receives
+        print('--- DEBUG: All cookies received ---')
+        print(request.cookies)
+        print(f"refresh_token cookie: {request.cookies.get('refresh_token', 'NOT FOUND')}")
+        print('-----------------------------------')
+        Authorize._token = request.cookies.get('refresh_token')
         Authorize.jwt_refresh_token_required()
+        print('passed jwt_refresh_token_required!')
 
         user_id = Authorize.get_jwt_subject()
         if not user_id:
@@ -91,7 +100,9 @@ def refresh_token(response: Response, Authorize: AuthJWT = Depends()):
         access_token = Authorize.create_access_token(
             subject=str(user["id"]), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN))
     except Exception as e:
+        traceback.print_exc()  # ADD THIS - prints full stack trace
         error = e.__class__.__name__
+        print(f'--- DEBUG: Exception: {error} - {e} ---')
         if error == 'MissingTokenError':
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail='Please provide refresh token')
