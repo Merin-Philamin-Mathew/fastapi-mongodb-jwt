@@ -114,6 +114,7 @@ def refresh_token(response: Response, request: Request, Authorize: AuthJWT = Dep
     response.set_cookie('logged_in', 'True', ACCESS_TOKEN_EXPIRES_IN * 60,
                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, False, 'lax')
     return {'access_token': access_token}
+    
 
 
 # [...] logout user
